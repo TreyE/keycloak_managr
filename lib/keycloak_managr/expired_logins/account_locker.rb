@@ -26,11 +26,18 @@ module KeycloakManagr
         end
       end
 
+      # The main entry point.
+      def run!(dryrun = false)
+        produce_before_action_report
+        lock_accounts! unless dryrun
+        produce_after_action_report
+      end
+
       def select_accounts_to_lock!
         @report.build!
         @accounts_to_lock = []
         @report.records.each do |rec|
-          if time_check(rec[0], rec[1]) == "LOCK"
+          if (time_check(rec[0], rec[1]) == "LOCK") && rec[0].enabled
             @accounts_to_lock << rec
           end
         end
