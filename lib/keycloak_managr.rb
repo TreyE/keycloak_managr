@@ -6,7 +6,9 @@ require_relative 'keycloak_managr/keycloak_admin_extensions'
 require_relative 'keycloak_managr/last_login_report'
 require_relative 'keycloak_managr/expired_logins'
 
+# Various tools to manage keycloak via the REST API.
 module KeycloakManagr
+  # Run the initialization code to setup the KeycloakAdmin client.
   def execute_configuration!(configuration_options = {})
     config_options = configuration_options.symbolize_keys
     KeycloakAdmin.configure do |config|
