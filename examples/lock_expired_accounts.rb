@@ -1,5 +1,8 @@
 require_relative "lib/keycloak_managr"
 
+# Configuration.  Check out the 'Login' section of 
+# 'https://github.com/looorent/keycloak-admin-ruby' for information on
+# configuring a client for the master realm.
 config = {
   :server_url          => "URL INCLUDING /auth GOES HERE",
   :server_domain       => "master",
