@@ -3,46 +3,122 @@ module KeycloakManagr
   module KeycloakAdminExtensions
     # A client to query Event resources from Keycloak.
     class EventsClient < KeycloakAdmin::Client
+      # Provide a pagination wrapper around events.
+      class EventListPaginator
+
+        PAGINATION_LENGTH = 300
+
+        def initialize(configuration, lookup_url, extended_headers)
+          @lookup_url = lookup_url
+          @extended_headers = extended_headers
+          @configuration = configuration
+        end
+
+        # Iterate the results
+        def each
+          index = 0
+          while true do
+            response = RestClient::Resource.new(@lookup_url, @configuration.rest_client_options).get(add_header_offsets(index))
+            events = JSON.parse(response)
+            break if events.empty?
+            events.each do |event|
+              yield event
+            end
+            index += PAGINATION_LENGTH
+          end
+        end
+
+        protected
+
+        def add_header_offsets(index)
+          eh = @extended_headers.symbolize_keys
+          params = (eh[:params] != nil) ? eh[:params] : {}
+          eh[:params] = params.merge(:first => index, :max => PAGINATION_LENGTH)
+          eh
+        end
+      end
+
       def initialize(configuration, realm_client, realm_name)
         super(configuration)
         @realm_client = realm_client
         @realm_name = realm_name
       end
 
-      # List all events
-      def list
-        response = execute_http do
-          RestClient::Resource.new(event_list_url, @configuration.rest_client_options).get(headers.merge({params: {max: -1}}))
-        end
-        JSON.parse(response)
-      end
-
       # Search events with parameters.
       def search(query)
-        response = execute_http do
-          RestClient::Resource.new(event_list_url, @configuration.rest_client_options).get(headers.merge({params: query.merge({max: -1})}))
-        end
-        JSON.parse(response)
+        extended_headers = headers.merge({params: query})
+        EventListPaginator.new(@configuration, event_list_url, extended_headers)
       end
 
       protected
 
       def event_list_url
-        @realm_client.server_url + "/admin/realms/#{@realm_name}/events"
+        "#{@realm_client.realm_admin_url}/events"
       end
     end
 
     # Monkey-patched extensions to KeycloakAdmin::UserClient
     module UserClientExtensions
-      # List users using arbitrary parameters.
-      #
-      # We use it to pass in a parameter which prevents limiting of the returned
-      # amount of user records.
-      def list_with_params(params)
-        response = execute_http do
-        RestClient::Resource.new(users_url, @configuration.rest_client_options).get(headers.merge({params: params}))
+      # Provide a pagination wrapper around users.
+      class UserListPaginator
+
+        include Enumerable
+
+        PAGINATION_LENGTH = 300
+
+        def initialize(configuration, lookup_url, extended_headers, total)
+          @total = total
+          @lookup_url = lookup_url
+          @extended_headers = extended_headers
+          @configuration = configuration
         end
-        JSON.parse(response).map { |user_as_hash| ::KeycloakAdmin::UserRepresentation.from_hash(user_as_hash) }
+
+        # Provide a total count of user records.
+        def count
+          @total
+        end
+
+        # Iterate the results.
+        def each
+          index = 0
+          while index < @total do
+            response = RestClient::Resource.new(@lookup_url, @configuration.rest_client_options).get(add_header_offsets(index))
+            users = JSON.parse(response).map { |user_as_hash| ::KeycloakAdmin::UserRepresentation.from_hash(user_as_hash) }
+            users.each do |user|
+              yield user
+            end
+            index += PAGINATION_LENGTH
+          end
+        end
+
+        protected
+
+        def add_header_offsets( index)
+          eh = @extended_headers.symbolize_keys
+          params = (eh[:params] != nil) ? eh[:params] : {}
+          eh[:params] = params.merge(:first => index, :max => PAGINATION_LENGTH)
+          eh
+        end
+      end
+
+      # List users using arbitrary parameters, and paginate.
+      def paginated_list(params = {})
+        extended_headers = if params.empty?
+                             headers
+                           else
+                             headers.merge({params: params})
+                           end
+        response = execute_http do
+          RestClient::Resource.new(pagination_count_url, @configuration.rest_client_options).get(extended_headers)
+        end
+        total = response.to_s.to_i
+        UserListPaginator.new(@configuration, users_url, extended_headers, total)
+      end
+
+      protected
+
+      def pagination_count_url
+        "#{@realm_client.realm_admin_url}/users/count"
       end
     end
 
