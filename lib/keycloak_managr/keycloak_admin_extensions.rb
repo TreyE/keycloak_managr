@@ -6,8 +6,17 @@ module KeycloakManagr
       # Provide a pagination wrapper around events.
       class EventListPaginator
 
+        # How many event records to pull per request.
         PAGINATION_LENGTH = 300
 
+        # Create a new client.
+        #
+        # @param [Object] configuration a KeycloakAdmin client configuration,
+        #                               comes from the parent EventClient
+        # @param [String] lookup_url the URL to use to query events from
+        #                            Keycloak, comes from the parent EventClient
+        # @param [Object] extended_headers The headers needed for all requests,
+        #                                  come from the parent EventClient
         def initialize(configuration, lookup_url, extended_headers)
           @lookup_url = lookup_url
           @extended_headers = extended_headers
@@ -15,6 +24,8 @@ module KeycloakManagr
         end
 
         # Iterate the results
+        #
+        # @yieldparam [Hash] event the event as a hash
         def each
           index = 0
           while true do
@@ -64,8 +75,19 @@ module KeycloakManagr
 
         include Enumerable
 
+        # How many user records to pull per request.
         PAGINATION_LENGTH = 300
 
+        # Create a new client.
+        #
+        # @param [Object] configuration a KeycloakAdmin client configuration,
+        #                               comes from the parent UserClient
+        # @param [String] lookup_url the URL to use to query users from
+        #                            Keycloak, comes from the parent UserClient
+        # @param [Object] extended_headers The headers needed for all requests,
+        #                                  come from the parent UserClient
+        # @param [Integer] total the total number of user records, queried as
+        #                        count by the UserClient before the iterator is created.
         def initialize(configuration, lookup_url, extended_headers, total)
           @total = total
           @lookup_url = lookup_url
@@ -79,6 +101,8 @@ module KeycloakManagr
         end
 
         # Iterate the results.
+        #
+        # @yieldparam [KeycloakAdmin::UserResource] user The user resource.
         def each
           index = 0
           while index < @total do

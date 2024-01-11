@@ -5,7 +5,7 @@ module KeycloakManagr
   # used to generate data for other objects who care about the last time a
   # user logged in.
   class LastLoginReport
-    # @return [Array] the report result records.
+    # @return [Array<Array(KeycloakAdmin::UserResource,Time)>] the report result records.
     attr_reader :records
 
     # Create a new instance.

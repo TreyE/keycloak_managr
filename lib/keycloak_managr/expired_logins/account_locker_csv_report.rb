@@ -4,6 +4,9 @@ module KeycloakManagr
   module ExpiredLogins
     # Reports on the actions of the AccountLocker to a csv.
     class AccountLockerCsvReport
+      # New report.
+      #
+      # @param [String] file_path the path for the report CSV
       def initialize(file_path)
         @file_path = file_path
       end
