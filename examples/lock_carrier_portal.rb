@@ -15,24 +15,16 @@ config = {
 
 KeycloakManagr.execute_configuration!(config)
 
-dont_lock_admin = Proc.new { |realm_name, user| user.username != "admin" }
 only_lock_ideacrew_carrier_portal = Proc.new do |realm_name, user|
   (user.username =~ /@ideacrew.com\Z/i) &&
     (user.attributes && user.attributes.has_key?("transaction_management_carriers"))
 end
 
-locker1 = KeycloakManagr::ExpiredLogins::AccountLocker.new(
-  "master",
-  60,
-  dont_lock_admin
-)
-locker1.run!(true)
-
-locker2 = KeycloakManagr::ExpiredLogins::AccountLocker.new(
+locker = KeycloakManagr::ExpiredLogins::AccountLocker.new(
   "preprod",
   60,
   only_lock_ideacrew_carrier_portal,
   KeycloakManagr::ExpiredLogins::AccountLockerCsvReport.new("before_locking.csv"),
   KeycloakManagr::ExpiredLogins::AccountLockerCsvReport.new("after_locking.csv")
 )
-locker2.run!
+locker.run!
