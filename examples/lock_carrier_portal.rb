@@ -30,7 +30,7 @@ locker1.run!(true)
 
 locker2 = KeycloakManagr::ExpiredLogins::AccountLocker.new(
   "preprod",
-  30,
+  60,
   only_lock_ideacrew_carrier_portal,
   KeycloakManagr::ExpiredLogins::AccountLockerCsvReport.new("before_locking.csv"),
   KeycloakManagr::ExpiredLogins::AccountLockerCsvReport.new("after_locking.csv")
