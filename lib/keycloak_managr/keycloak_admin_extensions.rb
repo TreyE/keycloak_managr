@@ -120,7 +120,7 @@ module KeycloakManagr
         def add_header_offsets( index)
           eh = @extended_headers.symbolize_keys
           params = (eh[:params] != nil) ? eh[:params] : {}
-          eh[:params] = params.merge(:first => index, :max => PAGINATION_LENGTH)
+          eh[:params] = params.merge(:first => index, :max => PAGINATION_LENGTH, :briefRepresentation => false)
           eh
         end
       end

@@ -13,14 +13,19 @@ config = {
   :client_secret       => "CLIENT SECRET GOES HERE"
 }
 
+# Read this in from an enroll CSV file, recommend you actually make a set
+admin_list = []
+
 KeycloakManagr.execute_configuration!(config)
 
 dont_lock_admin = Proc.new { |realm_name, user| user.username != "admin" }
-only_lock_trey = Proc.new { |realm_name, user| user.username =~ /trey.evans@ideacrew.com\Z/i }
+only_lock_enroll_admins = Proc.new do |realm_name, user|
+  admin_list.include?(user.username)
+end
 
 locker1 = KeycloakManagr::ExpiredLogins::AccountLocker.new(
   "master",
-  30,
+  60,
   dont_lock_admin
 )
 locker1.run!(true)
@@ -28,7 +33,7 @@ locker1.run!(true)
 locker2 = KeycloakManagr::ExpiredLogins::AccountLocker.new(
   "preprod",
   30,
-  only_lock_trey,
+  only_lock_enroll_admins,
   KeycloakManagr::ExpiredLogins::AccountLockerCsvReport.new("before_locking.csv"),
   KeycloakManagr::ExpiredLogins::AccountLockerCsvReport.new("after_locking.csv")
 )
